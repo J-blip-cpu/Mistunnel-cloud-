@@ -1,0 +1,843 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clever Portal</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='40' fill='%235DADE2'/><text x='50' y='60' text-anchor='middle' font-size='40' fill='white'>M</text></svg>">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* Floating particles animation */
+        .floating-particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .particle {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            animation: float 6s ease-in-out infinite;
+        }
+
+        .particle:nth-child(1) { width: 80px; height: 80px; left: 10%; animation-delay: 0s; }
+        .particle:nth-child(2) { width: 60px; height: 60px; left: 20%; animation-delay: 1s; }
+        .particle:nth-child(3) { width: 40px; height: 40px; left: 30%; animation-delay: 2s; }
+        .particle:nth-child(4) { width: 100px; height: 100px; left: 40%; animation-delay: 3s; }
+        .particle:nth-child(5) { width: 50px; height: 50px; left: 60%; animation-delay: 4s; }
+        .particle:nth-child(6) { width: 70px; height: 70px; left: 80%; animation-delay: 5s; }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
+            10%, 90% { opacity: 1; }
+            50% { transform: translateY(-100px) rotate(180deg); }
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            left: -250px;
+            top: 0;
+            width: 250px;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.9);
+            backdrop-filter: blur(10px);
+            transition: left 0.3s ease;
+            z-index: 1000;
+            overflow-y: auto;
+        }
+
+        .sidebar.open {
+            left: 0;
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            text-align: center;
+        }
+
+        .sidebar-header h2 {
+            color: white;
+            font-size: 1.5rem;
+        }
+
+        .nav-item {
+            display: block;
+            padding: 15px 20px;
+            color: white;
+            text-decoration: none;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            transition: background 0.3s ease;
+            cursor: pointer;
+        }
+
+        .nav-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .nav-item.active {
+            background: rgba(93, 173, 226, 0.3);
+        }
+
+        /* Main content */
+        .main-content {
+            transition: margin-left 0.3s ease;
+            min-height: 100vh;
+            position: relative;
+            z-index: 2;
+        }
+
+        .main-content.sidebar-open {
+            margin-left: 250px;
+        }
+
+        /* Header */
+        .header {
+            background: rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .menu-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0.5rem;
+        }
+
+        .status-container {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .status-selector, .health-selector, .proxy-counter {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+        }
+
+        /* Content sections */
+        .content-section {
+            display: none;
+            padding: 2rem;
+            color: white;
+        }
+
+        .content-section.active {
+            display: block;
+        }
+
+        /* Home section */
+        .home-section {
+            text-align: center;
+            padding: 4rem 2rem;
+        }
+
+        .logo-container {
+            margin-bottom: 2rem;
+        }
+
+        .logo {
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            margin: 0 auto 2rem;
+            display: block;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .welcome-text {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        /* About section */
+        .about-section {
+            max-width: 800px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 2rem;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+        }
+
+        /* Warning section */
+        .warning-section {
+            max-width: 800px;
+            margin: 0 auto;
+            background: rgba(255, 193, 7, 0.2);
+            border: 2px solid #ffc107;
+            padding: 2rem;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+        }
+
+        .warning-title {
+            color: #ffc107;
+            font-size: 2rem;
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+
+        /* Proxies section */
+        .proxy-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 1rem 1.5rem;
+            border-radius: 10px;
+            cursor: pointer;
+            margin-bottom: 1rem;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+
+        .proxy-header:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .proxy-arrow {
+            font-size: 1.2rem;
+            transition: transform 0.3s ease;
+        }
+
+        .proxy-arrow.expanded {
+            transform: rotate(180deg);
+        }
+
+        .proxy-tabs {
+            display: none;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+            padding: 0 1rem;
+        }
+
+        .proxy-tabs.expanded {
+            display: grid;
+        }
+
+        .proxy-tab {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            padding: 1.5rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+            text-align: center;
+        }
+
+        .proxy-tab:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        }
+
+        .proxy-tab h3 {
+            color: #5DADE2;
+            margin-bottom: 0.5rem;
+            font-size: 1.3rem;
+        }
+
+        .proxy-tab p {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+        }
+
+        .proxy-launch-btn {
+            background: linear-gradient(45deg, #5DADE2, #48CAE4);
+            color: white;
+            border: none;
+            padding: 0.7rem 1.5rem;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+
+        .proxy-launch-btn:hover {
+            background: linear-gradient(45deg, #4A90B8, #3BA8C4);
+            transform: scale(1.05);
+        }
+
+        /* Settings section */
+        .settings-group {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 1.5rem;
+            border-radius: 10px;
+            margin-bottom: 1rem;
+            backdrop-filter: blur(10px);
+        }
+
+        .settings-group h3 {
+            margin-bottom: 1rem;
+            color: #5DADE2;
+        }
+
+        .setting-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .setting-input, .setting-select {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            padding: 0.5rem;
+            border-radius: 5px;
+            width: 200px;
+        }
+
+        .save-btn {
+            background: #5DADE2;
+            color: white;
+            border: none;
+            padding: 0.7rem 1.5rem;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.3s ease;
+        }
+
+        .save-btn:hover {
+            background: #4A90B8;
+        }
+
+        .toggle-switch {
+            position: relative;
+            width: 50px;
+            height: 25px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 25px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .toggle-switch.active {
+            background: #5DADE2;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 21px;
+            height: 21px;
+            background: white;
+            border-radius: 50%;
+            transition: transform 0.3s ease;
+        }
+
+        .toggle-switch.active .toggle-slider {
+            transform: translateX(25px);
+        }
+
+        /* Overlay */
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            z-index: 999;
+        }
+
+        .overlay.show {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <!-- Floating particles -->
+    <div class="floating-particles">
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+    </div>
+
+    <!-- Overlay -->
+    <div class="overlay" id="overlay"></div>
+
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h2>Mistunnel</h2>
+        </div>
+        <a class="nav-item active" data-section="home" href="#home">🏠 Home</a>
+        <a class="nav-item" data-section="about" href="#about">📋 About</a>
+        <a class="nav-item" data-section="warning" href="#warning">⚠️ Warning</a>
+        <a class="nav-item" data-section="proxies" href="#proxies">🔗 Proxies</a>
+        <a class="nav-item" data-section="settings" href="#settings">⚙️ Settings</a>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content" id="mainContent">
+        <!-- Header -->
+        <div class="header">
+            <button class="menu-btn" id="menuBtn">☰</button>
+            <div class="status-container">
+                <select class="status-selector" id="statusSelector">
+                    <option value="online">🟢 Online</option>
+                    <option value="offline">🔴 Offline</option>
+                    <option value="school">🏫 At School</option>
+                    <option value="busy">🟡 Busy</option>
+                    <option value="away">🟠 Away</option>
+                    <option value="quit">❌ Quit</option>
+                </select>
+                <select class="health-selector" id="healthSelector">
+                    <option value="good">😊 Good</option>
+                    <option value="okay">😐 Okay</option>
+                    <option value="bad">😞 Bad</option>
+                    <option value="very-bad">😡 Very Bad</option>
+                    <option value="quit">💀 Quit</option>
+                </select>
+                <select class="proxy-counter" id="proxyCounter">
+                    <option value="0">0 Proxies</option>
+                    <option value="20+">20+ Proxies</option>
+                    <option value="50+">50+ Proxies</option>
+                    <option value="inf">∞ Proxies</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Home Section -->
+        <div class="content-section home-section active" id="home">
+            <div class="logo-container">
+                <img src="data:image/svg+xml;base64,PHN2ZyB2aWV3Qm94PSIwIDAgNDAwIDQwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICAgIDwhLS0gU2t5IGJhY2tncm91bmQgLS0+CiAgICA8Y2lyY2xlIGN4PSIyMDAiIGN5PSIyMDAiIHI9IjIwMCIgZmlsbD0idXJsKCNza3lHcmFkaWVudCkiLz4KICAgIDwhLS0gTW91bnRhaW5zIC0tPgogICAgPHBhdGggZD0iTTAgMzAwIFExMDAgMjUwIDIwMCAyODAgUTMwMCAyNTAgNDAwIDMwMCBMNDAwIDQwMCBMMCA0MDBaIiBmaWxsPSIjNGE3YzU5Ii8+CiAgICA8cGF0aCBkPSJNNTAgMzIwIFExNTAgMjcwIDI1MCAzMDAgUTM1MCAyNzAgNDAwIDMyMCBMNDAwIDQwMCBMNTAgNDAwWiIgZmlsbD0iIzVkOGM2OSIvPgogICAgPCEtLSBMYXJnZSBjbG91ZCAtLT4KICAgIDxnIHN0cm9rZT0iIzJjM2U1MCIgc3Ryb2tlLXdpZHRoPSIzIiBmaWxsPSJ1cmwoI2Nsb3VkR3JhZGllbnQpIj4KICAgICAgICA8Y2lyY2xlIGN4PSIxODAiIGN5PSIxNTAiIHI9IjMwIi8+CiAgICAgICAgPGNpcmNsZSBjeD0iMjEwIiBjeT0iMTQwIiByPSIzNSIvPgogICAgICAgIDxjaXJjbGUgY3g9IjI0MCIgY3k9IjE1MCIgcj0iMzAiLz4KICAgICAgICA8Y2lyY2xlIGN4PSIyMDAiIGN5PSIxNzAiIHI9IjI1Ii8+CiAgICAgICAgPGNpcmNsZSBjeD0iMjIwIiBjeT0iMTY1IiByPSIyOCIvPgogICAgPC9nPgogICAgPCEtLSBTbWFsbGVyIGNsb3VkcyAtLT4KICAgIDxjaXJjbGUgY3g9IjEwMCIgY3k9IjEwMCIgcj0iMTUiIGZpbGw9InJnYmEoMjU1LDI1NSwyNTUsMC44KSIvPgogICAgPGNpcmNsZSBjeD0iMTE1IiBjeT0iOTUiIHI9IjE4IiBmaWxsPSJyZ2JhKDI1NSwyNTUsMjU1LDAuOCkiLz4KICAgIDxjaXJjbGUgY3g9IjMyMCIgY3k9IjEyMCIgcj0iMTIiIGZpbGw9InJnYmEoMjU1LDI1NSwyNTUsMC44KSIvPgogICAgPGNpcmNsZSBjeD0iMzMwIiBjeT0iMTE1IiByPSIxNSIgZmlsbD0icmdiYSgyNTUsMjU1LDI1NSwwLjgpIi8+CiAgICA8ZGVmcz4KICAgICAgICA8bGluZWFyR3JhZGllbnQgaWQ9InNreUdyYWRpZW50IiB4MT0iMCUiIHkxPSIwJSIgeDI9IjAlIiB5Mj0iMTAwJSI+CiAgICAgICAgICAgIDxzdG9wIG9mZnNldD0iMCUiIHN0eWxlPSJzdG9wLWNvbG9yOiM4N0NFRUIiLz4KICAgICAgICAgICAgPHN0b3Agb2Zmc2V0PSIxMDAlIiBzdHlsZT0ic3RvcC1jb2xvcjojOThEOEU4Ii8+CiAgICAgICAgPC9saW5lYXJHcmFkaWVudD4KICAgICAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImNsb3VkR3JhZGllbnQiIHgxPSIwJSIgeTE9IjAlIiB4Mj0iMCUiIHkyPSIxMDAlIj4KICAgICAgICAgICAgPHN0b3Agb2Zmc2V0PSIwJSIgc3R5bGU9InN0b3AtY29sb3I6I2ZmZmZmZiIvPgogICAgICAgICAgICA8c3RvcCBvZmZzZXQ9IjEwMCUiIHN0eWxlPSJzdG9wLWNvbG9yOiNlNmYzZmYiLz4KICAgICAgICA8L2xpbmVhckdyYWRpZW50PgogICAgPC9kZWZzPgo8L3N2Zz4=" alt="Mistunnel Logo" class="logo" id="homeImage">
+            </div>
+            <h1 class="welcome-text">Welcome to Mistunnel</h1>
+            <p style="font-size: 1.2rem; opacity: 0.9;">Your gateway to unrestricted browsing and entertainment</p>
+        </div>
+
+        <!-- About Section -->
+        <div class="content-section about-section" id="about">
+            <h2 style="text-align: center; margin-bottom: 2rem; color: #5DADE2;">About Mistunnel</h2>
+            <p style="font-size: 1.1rem; line-height: 1.6; text-align: center;">
+                This is a comprehensive hub where you can find games and proxies if your school has a blocker. 
+                Our platform provides easy access to entertainment and unrestricted browsing tools to help you 
+                navigate around network restrictions safely and conveniently.
+            </p>
+        </div>
+
+        <!-- Warning Section -->
+        <div class="content-section warning-section" id="warning">
+            <h2 class="warning-title">⚠️ WARNING! ⚠️</h2>
+            <div style="text-align: center; font-size: 1.1rem; line-height: 1.6;">
+                <p style="margin-bottom: 1rem;"><strong>⚠️ Heads Up!</strong></p>
+                <p style="margin-bottom: 1rem;">
+                    This document was made for convenience and fun, not to get you in trouble. 
+                    Mistunnel takes no responsibility if you face consequences from school staff, parents, or guardians.
+                </p>
+                <p>
+                    If you choose to use proxies or play games, do so at your own risk and discretion.
+                </p>
+            </div>
+        </div>
+
+        <!-- Proxies Section -->
+        <div class="content-section" id="proxies">
+            <h2 style="text-align: center; margin-bottom: 2rem; color: #5DADE2;">Available Proxies</h2>
+            
+            <div class="proxy-header" onclick="toggleProxyTabs()">
+                <h3>🔗 Browse All Proxies</h3>
+                <span class="proxy-arrow" id="proxyArrow">▼</span>
+            </div>
+
+            <div class="proxy-tabs" id="proxyTabs">
+                <div class="proxy-tab" onclick="openProxy('rammerhead', 'https://example.com/rammerhead')">
+                    <h3>🐏 Rammerhead</h3>
+                    <p>Fast and reliable proxy service with excellent bypass capabilities</p>
+                    <button class="proxy-launch-btn">Launch Rammerhead</button>
+                </div>
+
+                <div class="proxy-tab" onclick="openProxy('ultraviolet', 'https://example.com/ultraviolet')">
+                    <h3>🟣 Ultraviolet</h3>
+                    <p>Advanced web proxy with modern encryption and stealth features</p>
+                    <button class="proxy-launch-btn">Launch Ultraviolet</button>
+                </div>
+
+                <div class="proxy-tab" onclick="openProxy('nebula', 'https://example.com/nebula')">
+                    <h3>🌌 Nebula</h3>
+                    <p>High-performance proxy designed for gaming and streaming</p>
+                    <button class="proxy-launch-btn">Launch Nebula</button>
+                </div>
+
+                <div class="proxy-tab" onclick="openProxy('interstellar', 'https://example.com/interstellar')">
+                    <h3>⭐ Interstellar</h3>
+                    <p>Premium proxy service with enhanced security and speed</p>
+                    <button class="proxy-launch-btn">Launch Interstellar</button>
+                </div>
+
+                <div class="proxy-tab" onclick="openProxy('tsunami', 'https://example.com/tsunami')">
+                    <h3>🌊 Tsunami</h3>
+                    <p>Powerful proxy with wave-based routing for maximum anonymity</p>
+                    <button class="proxy-launch-btn">Launch Tsunami</button>
+                </div>
+
+                <div class="proxy-tab" onclick="openProxy('holy', 'https://example.com/holy')">
+                    <h3>😇 Holy Unblocker</h3>
+                    <p>Comprehensive unblocking solution with games and apps</p>
+                    <button class="proxy-launch-btn">Launch Holy Unblocker</button>
+                </div>
+
+                <div class="proxy-tab" onclick="openProxy('shadow', 'https://example.com/shadow')">
+                    <h3>👤 Shadow</h3>
+                    <p>Stealth proxy that operates in the shadows of network detection</p>
+                    <button class="proxy-launch-btn">Launch Shadow</button>
+                </div>
+
+                <div class="proxy-tab" onclick="openProxy('phantom', 'https://example.com/phantom')">
+                    <h3>👻 Phantom</h3>
+                    <p>Ghostly fast proxy that leaves no trace behind</p>
+                    <button class="proxy-launch-btn">Launch Phantom</button>
+                </div>
+
+                <div class="proxy-tab" onclick="openProxy('velocity', 'https://example.com/velocity')">
+                    <h3>⚡ Velocity</h3>
+                    <p>Lightning-fast proxy optimized for speed and performance</p>
+                    <button class="proxy-launch-btn">Launch Velocity</button>
+                </div>
+
+                <div class="proxy-tab" onclick="openProxy('vortex', 'https://example.com/vortex')">
+                    <h3>🌪️ Vortex</h3>
+                    <p>Dynamic proxy that creates tunnels through network restrictions</p>
+                    <button class="proxy-launch-btn">Launch Vortex</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Settings Section -->
+        <div class="content-section" id="settings">
+            <h2 style="text-align: center; margin-bottom: 2rem; color: #5DADE2;">Settings</h2>
+            
+            <div class="settings-group">
+                <h3>🛡️ Protection Features</h3>
+                <div class="setting-item">
+                    <span>About:Blank Mode</span>
+                    <div class="toggle-switch" id="blankModeToggle">
+                        <div class="toggle-slider"></div>
+                    </div>
+                </div>
+                <div class="setting-item">
+                    <span>Anti-Close Protection</span>
+                    <div class="toggle-switch" id="antiCloseToggle">
+                        <div class="toggle-slider"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="settings-group">
+                <h3>🎭 Tab Disguise</h3>
+                <div class="setting-item">
+                    <span>Tab Title</span>
+                    <input type="text" class="setting-input" id="tabTitle" placeholder="Enter tab title" value="Clever Portal">
+                </div>
+                <div class="setting-item">
+                    <span>Tab Icon</span>
+                    <select class="setting-select" id="tabIcon">
+                        <option value="clever">Clever Portal</option>
+                        <option value="classroom">Google Classroom</option>
+                        <option value="drive">Google Drive</option>
+                        <option value="docs">Google Docs</option>
+                        <option value="gmail">Gmail</option>
+                        <option value="canvas">Canvas</option>
+                        <option value="custom">Custom</option>
+                    </select>
+                </div>
+                <div class="setting-item" id="customIconGroup" style="display: none;">
+                    <span>Custom Icon URL</span>
+                    <input type="text" class="setting-input" id="customIconUrl" placeholder="Enter icon URL">
+                </div>
+                <div class="setting-item" id="customTitleGroup" style="display: none;">
+                    <span>Custom Title</span>
+                    <input type="text" class="setting-input" id="customTitle" placeholder="Enter custom title">
+                </div>
+            </div>
+
+            <div style="text-align: center; margin-top: 2rem;">
+                <button class="save-btn" onclick="saveSettings()">💾 Save Settings</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let settings = {
+            blankMode: false,
+            antiClose: false,
+            tabTitle: 'Clever Portal',
+            tabIcon: 'clever',
+            customIconUrl: '',
+            customTitle: ''
+        };
+
+        // DOM elements
+        const sidebar = document.getElementById('sidebar');
+        const mainContent = document.getElementById('mainContent');
+        const overlay = document.getElementById('overlay');
+        const menuBtn = document.getElementById('menuBtn');
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            loadSettings();
+            setupEventListeners();
+            applySettings();
+        });
+
+        // Event listeners
+        function setupEventListeners() {
+            // Menu toggle
+            menuBtn.addEventListener('click', toggleSidebar);
+            overlay.addEventListener('click', closeSidebar);
+
+            // Navigation
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const section = this.getAttribute('data-section');
+                    showSection(section);
+                    updateActiveNav(this);
+                    closeSidebar();
+                });
+            });
+
+            // Settings toggles
+            document.getElementById('blankModeToggle').addEventListener('click', function() {
+                toggleSetting(this, 'blankMode');
+            });
+
+            document.getElementById('antiCloseToggle').addEventListener('click', function() {
+                toggleSetting(this, 'antiClose');
+            });
+
+            // Tab icon selector
+            document.getElementById('tabIcon').addEventListener('change', function() {
+                const customGroup = document.getElementById('customIconGroup');
+                const customTitleGroup = document.getElementById('customTitleGroup');
+                if (this.value === 'custom') {
+                    customGroup.style.display = 'flex';
+                    customTitleGroup.style.display = 'flex';
+                } else {
+                    customGroup.style.display = 'none';
+                    customTitleGroup.style.display = 'none';
+                }
+            });
+
+            // Anti-close protection
+            window.addEventListener('beforeunload', function(e) {
+                if (settings.antiClose) {
+                    e.preventDefault();
+                    e.returnValue = '';
+                    return '';
+                }
+            });
+        }
+
+        // Sidebar functions
+        function toggleSidebar() {
+            sidebar.classList.toggle('open');
+            mainContent.classList.toggle('sidebar-open');
+            overlay.classList.toggle('show');
+        }
+
+        function closeSidebar() {
+            sidebar.classList.remove('open');
+            mainContent.classList.remove('sidebar-open');
+            overlay.classList.remove('show');
+        }
+
+        // Navigation functions
+        function showSection(sectionId) {
+            document.querySelectorAll('.content-section').forEach(section => {
+                section.classList.remove('active');
+            });
+            document.getElementById(sectionId).classList.add('active');
+        }
+
+        function updateActiveNav(activeItem) {
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            activeItem.classList.add('active');
+        }
+
+        // Settings functions
+        function toggleSetting(toggle, settingName) {
+            toggle.classList.toggle('active');
+            settings[settingName] = toggle.classList.contains('active');
+        }
+
+        function saveSettings() {
+            // Get all setting values
+            settings.tabTitle = document.getElementById('tabTitle').value;
+            settings.tabIcon = document.getElementById('tabIcon').value;
+            settings.customIconUrl = document.getElementById('customIconUrl').value;
+            settings.customTitle = document.getElementById('customTitle').value;
+
+            // Apply settings
+            applySettings();
+            
+            alert('Settings saved successfully!');
+        }
+
+        function loadSettings() {
+            // In a real application, you would load from localStorage or server
+            // For now, we'll use default values
+            updateSettingsUI();
+        }
+
+        function updateSettingsUI() {
+            document.getElementById('tabTitle').value = settings.tabTitle;
+            document.getElementById('tabIcon').value = settings.tabIcon;
+            document.getElementById('customIconUrl').value = settings.customIconUrl;
+            document.getElementById('customTitle').value = settings.customTitle;
+
+            // Update toggles
+            const blankToggle = document.getElementById('blankModeToggle');
+            const antiCloseToggle = document.getElementById('antiCloseToggle');
+            
+            if (settings.blankMode) blankToggle.classList.add('active');
+            if (settings.antiClose) antiCloseToggle.classList.add('active');
+        }
+
+        function applySettings() {
+            // Apply tab title and icon
+            let title = settings.tabTitle;
+            let iconUrl = '';
+
+            if (settings.tabIcon === 'custom' && settings.customTitle) {
+                title = settings.customTitle;
+            }
+
+            if (settings.tabIcon === 'custom' && settings.customIconUrl) {
+                iconUrl = settings.customIconUrl;
+            } else {
+                // Predefined icons
+                const iconMap = {
+                    'clever': 'https://assets.clever.com/resource-icons/clever-favicon.ico',
+                    'classroom': 'https://ssl.gstatic.com/classroom/favicon.png',
+                    'drive': 'https://ssl.gstatic.com/docs/doclist/images/drive_2022q3_32dp.png',
+                    'docs': 'https://ssl.gstatic.com/docs/documents/images/kix-favicon7.ico',
+                    'gmail': 'https://ssl.gstatic.com/ui/v1/icons/mail/rfr/gmail.ico',
+                    'canvas': 'https://du11hjcvx0uqb.cloudfront.net/dist/images/favicon-e10d657a73.ico'
+                };
+                iconUrl = iconMap[settings.tabIcon] || iconMap['clever'];
+            }
+
+            document.title = title;
+            
+            // Update favicon
+            let link = document.querySelector("link[rel*='icon']") || document.createElement('link');
+            link.type = 'image/x-icon';
+            link.rel = 'shortcut icon';
+            link.href = iconUrl;
+            document.getElementsByTagName('head')[0].appendChild(link);
+
+            // About:blank mode
+            if (settings.blankMode) {
+                const currentUrl = window.location.href;
+                const newWindow = window.open('about:blank', '_blank');
+                newWindow.document.write(`<iframe src="${currentUrl}" style="width:100%;height:100%;border:none;"></iframe>`);
+                newWindow.document.title = title;
+            }
+        }
+
+        // Proxy functions
+        function toggleProxyTabs() {
+            const proxyTabs = document.getElementById('proxyTabs');
+            const proxyArrow = document.getElementById('proxyArrow');
+            
+            proxyTabs.classList.toggle('expanded');
+            proxyArrow.classList.toggle('expanded');
+        }
+
+        function openProxy(proxyName, proxyUrl) {
+            // Default URLs - you can replace these with actual proxy URLs
+            const proxyUrls = {
+                'rammerhead': proxyUrl || 'https://rammerhead.org',
+                'ultraviolet': proxyUrl || 'https://ultraviolet.org',
+                'nebula': proxyUrl || 'https://nebula.bio',
+                'interstellar': proxyUrl || 'https://interstellar.dev',
+                'tsunami': proxyUrl || 'https://tsunami.org',
+                'holy': proxyUrl || 'https://holyubofficial.net',
+                'shadow': proxyUrl || 'https://shadow-network.org',
+                'phantom': proxyUrl || 'https://phantom-proxy.org',
+                'velocity': proxyUrl || 'https://velocity-proxy.org',
+                'vortex': proxyUrl || 'https://vortex-proxy.org'
+            };
+
+            const url = proxyUrls[proxyName] || proxyUrl;
+            if (url && url !== 'https://example.com/' + proxyName) {
+                window.open(url, '_blank');
+            } else {
+                alert(`${proxyName} proxy is currently unavailable. Please provide the correct URL.`);
+            }
+        }
+
+        // Function to update home image
+        function updateHomeImage(imageUrl) {
+            const homeImage = document.getElementById('homeImage');
+            if (imageUrl && imageUrl.trim() !== '') {
+                homeImage.src = imageUrl;
+                homeImage.onerror = function() {
+                    // If custom image fails to load, keep the default
+                    console.log('Custom image failed to load, keeping default');
+                };
+            }
+        }
+
+        // Status updates
+        document.getElementById('statusSelector').addEventListener('change', function() {
+            console.log('Status changed to:', this.value);
+        });
+
+        document.getElementById('healthSelector').addEventListener('change', function() {
+            console.log('Health status changed to:', this.value);
+        });
+
+        document.getElementById('proxyCounter').addEventListener('change', function() {
+            console.log('Proxy count changed to:', this.value);
+        });
+    </script>
+</body>
+</html>
